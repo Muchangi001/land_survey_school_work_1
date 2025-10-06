@@ -40,25 +40,30 @@ def transform_coordinates(input: list):
             coord = rect_to_polar(input[i])
             output_coordinates.append(coord)
             print(coord)
+    print()
 
 def collect_coordinates():
-    print("Hello")
+    print("\nHello")
     global input_coordinates
     coordinate_system = input("Enter input the coordinate system 'Rectangular | Polar': ").lower()
     input_count = int(input("Enter number of coordinates to insert: "))
+    print()
     
     if coordinate_system == "polar":
         for count in range(0, input_count):
             coord = PolarCoordinate(0, 0)
             coord.distance = float(input(f"Distance ({count + 1}): "))
             coord.angle = float(input(f"Angle ({count + 1}): "))
+            print()
             input_coordinates.append(coord)
     else:
         for count in range(0, input_count):
             coord = RectangularCoordinate(0, 0)
             coord.northing = float(input(f"Northing ({count + 1}): "))
             coord.easting = float(input(f"Easting ({count + 1}): "))
+            print()
             input_coordinates.append(coord)
+    print()
     transform_coordinates(input_coordinates)
 
 def start():

@@ -1,5 +1,6 @@
 This program converts between **Polar** and **Rectangular** coordinate systems through a user-friendly interface.
 
+![terminal](screenshots/image.png)
 ## Key Components
 
 ### 1. Coordinate Classes
