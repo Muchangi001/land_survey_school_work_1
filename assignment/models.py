@@ -9,7 +9,7 @@ class PolarCoordinate:
         self.angle = angle
     
     def __str__(self):
-        return f"<PolarCoordinate, distance={self.distance}, angle={self.angle}>"
+        return f"<PolarCoordinate, distance={self.distance:.4f}, angle={self.angle:.4f}>"
 
 class RectangularCoordinate:
     def __init__(self, northing: float, easting: float):
@@ -17,7 +17,7 @@ class RectangularCoordinate:
         self.easting = easting
 
     def __str__(self):
-        return f"<RectangularCoordinate, northing={self.northing}, easting={self.easting}>"
+        return f"<RectangularCoordinate, northing={self.northing:.4f}, easting={self.easting:.4f}>"
 
 def polar_to_rect(coord: PolarCoordinate) -> RectangularCoordinate:
     northing = coord.distance * math.cos(coord.angle)
