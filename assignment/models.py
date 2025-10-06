@@ -44,7 +44,6 @@ def transform_coordinates(input: list):
 
 def collect_coordinates():
     print("\nHello")
-    global input_coordinates
     coordinate_system = input("Enter input the coordinate system 'Rectangular | Polar': ").lower()
     input_count = int(input("Enter number of coordinates to insert: "))
     print()
