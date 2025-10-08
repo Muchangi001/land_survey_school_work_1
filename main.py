@@ -1,3 +1,3 @@
-from assignment.models import start
+from models import start
 
 start()
