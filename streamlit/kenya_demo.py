@@ -1,7 +1,9 @@
 import streamlit as st
 import math
 import pandas as pd
-import plotly.graph_objects as go
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+import numpy as np
 
 # Set page config FIRST
 st.set_page_config(
@@ -75,99 +77,82 @@ def rect_to_polar(coord: RectangularCoordinate) -> PolarCoordinate:
 def create_coordinate_plot(northing, easting, distance, angle, mode):
     """Create an interactive plot showing the coordinate system"""
     
-    # Create figure
-    fig = go.Figure()
+    # Create figure and axis
+    fig, ax = plt.subplots(figsize=(10, 10))
     
-    # Add grid lines
-    max_val = max(abs(northing), abs(easting), distance) * 1.2
+    # Calculate plot limits
+    max_val = max(abs(northing), abs(easting), distance) * 1.3
     if max_val == 0:
         max_val = 100
     
-    # Add axes
-    fig.add_trace(go.Scatter(
-        x=[-max_val, max_val], y=[0, 0],
-        mode='lines',
-        line=dict(color='gray', width=1, dash='dash'),
-        name='Easting Axis',
-        showlegend=False
-    ))
+    # Set equal aspect ratio and limits
+    ax.set_aspect('equal')
+    ax.set_xlim(-max_val, max_val)
+    ax.set_ylim(-max_val, max_val)
     
-    fig.add_trace(go.Scatter(
-        x=[0, 0], y=[-max_val, max_val],
-        mode='lines',
-        line=dict(color='gray', width=1, dash='dash'),
-        name='Northing Axis',
-        showlegend=False
-    ))
+    # Add grid
+    ax.grid(True, linestyle='--', alpha=0.3, color='gray')
+    
+    # Draw main axes
+    ax.axhline(y=0, color='gray', linewidth=1.5, linestyle='-', alpha=0.5)
+    ax.axvline(x=0, color='gray', linewidth=1.5, linestyle='-', alpha=0.5)
     
     # Add polar angle arc if converting from polar
-    if mode == "polar":
+    if mode == "polar" and distance > 0:
         angle_rad = math.radians(angle)
-        arc_angles = [math.radians(i) for i in range(0, int(angle) + 1)]
         arc_radius = distance * 0.3
-        arc_x = [arc_radius * math.sin(a) for a in arc_angles]
-        arc_y = [arc_radius * math.cos(a) for a in arc_angles]
-        
-        fig.add_trace(go.Scatter(
-            x=arc_x, y=arc_y,
-            mode='lines',
-            line=dict(color='orange', width=2),
-            name=f'Angle: {angle:.2f}°'
-        ))
+        arc_angles = np.linspace(0, angle_rad, 50)
+        arc_x = arc_radius * np.sin(arc_angles)
+        arc_y = arc_radius * np.cos(arc_angles)
+        ax.plot(arc_x, arc_y, 'orange', linewidth=2, label=f'Angle: {angle:.2f}°')
     
-    # Add line from origin to point
-    fig.add_trace(go.Scatter(
-        x=[0, easting], y=[0, northing],
-        mode='lines+markers',
-        line=dict(color='red', width=3),
-        marker=dict(size=[8, 12], color=['green', 'red']),
-        name=f'Distance: {distance:.2f}m',
-        text=['Origin', 'Point'],
-        textposition='top center'
-    ))
+    # Draw line from origin to point
+    ax.plot([0, easting], [0, northing], 'r-', linewidth=2.5, label=f'Distance: {distance:.2f}m')
     
-    # Add the point
-    fig.add_trace(go.Scatter(
-        x=[easting], y=[northing],
-        mode='markers+text',
-        marker=dict(size=15, color='red', symbol='circle'),
-        text=[f'({northing:.2f}, {easting:.2f})'],
-        textposition='top right',
-        name='Target Point',
-        showlegend=False
-    ))
+    # Plot origin point
+    ax.plot(0, 0, 'go', markersize=12, label='Origin', zorder=5)
     
-    # Add origin marker
-    fig.add_trace(go.Scatter(
-        x=[0], y=[0],
-        mode='markers+text',
-        marker=dict(size=12, color='green', symbol='circle'),
-        text=['Origin (0, 0)'],
-        textposition='bottom center',
-        name='Origin',
-        showlegend=False
-    ))
+    # Plot target point
+    ax.plot(easting, northing, 'ro', markersize=15, label='Target Point', zorder=5)
     
-    # Add directional labels
+    # Add coordinate annotation
+    offset = max_val * 0.05
+    ax.annotate(f'({northing:.2f}, {easting:.2f})',
+                xy=(easting, northing),
+                xytext=(easting + offset, northing + offset),
+                fontsize=10,
+                bbox=dict(boxstyle='round,pad=0.5', facecolor='yellow', alpha=0.7),
+                arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0', color='black'))
+    
+    # Add origin label
+    ax.annotate('Origin (0, 0)',
+                xy=(0, 0),
+                xytext=(offset, -offset*2),
+                fontsize=10,
+                bbox=dict(boxstyle='round,pad=0.5', facecolor='lightgreen', alpha=0.7))
+    
+    # Add cardinal direction labels
     label_offset = max_val * 0.9
-    fig.add_annotation(x=0, y=label_offset, text="N", showarrow=False, font=dict(size=16, color="blue"))
-    fig.add_annotation(x=label_offset, y=0, text="E", showarrow=False, font=dict(size=16, color="blue"))
-    fig.add_annotation(x=0, y=-label_offset, text="S", showarrow=False, font=dict(size=16, color="blue"))
-    fig.add_annotation(x=-label_offset, y=0, text="W", showarrow=False, font=dict(size=16, color="blue"))
+    ax.text(0, label_offset, 'N', fontsize=16, color='blue', ha='center', weight='bold')
+    ax.text(label_offset, 0, 'E', fontsize=16, color='blue', va='center', weight='bold')
+    ax.text(0, -label_offset, 'S', fontsize=16, color='blue', ha='center', weight='bold')
+    ax.text(-label_offset, 0, 'W', fontsize=16, color='blue', va='center', weight='bold')
     
-    # Update layout
-    fig.update_layout(
-        title="Coordinate Visualization",
-        xaxis_title="Easting (m)",
-        yaxis_title="Northing (m)",
-        hovermode='closest',
-        height=600,
-        showlegend=True,
-        xaxis=dict(scaleanchor="y", scaleratio=1, zeroline=True, gridcolor='lightgray'),
-        yaxis=dict(scaleanchor="x", scaleratio=1, zeroline=True, gridcolor='lightgray'),
-        plot_bgcolor='white',
-        paper_bgcolor='white'
-    )
+    # Labels and title
+    ax.set_xlabel('Easting (m)', fontsize=12, weight='bold')
+    ax.set_ylabel('Northing (m)', fontsize=12, weight='bold')
+    ax.set_title('Coordinate Visualization', fontsize=14, weight='bold', pad=20)
+    
+    # Legend
+    ax.legend(loc='upper right', fontsize=10, framealpha=0.9)
+    
+    # Style
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_linewidth(1.5)
+    ax.spines['bottom'].set_linewidth(1.5)
+    
+    plt.tight_layout()
     
     return fig
 
@@ -237,7 +222,7 @@ with tab1:
                 st.divider()
                 st.markdown("### 📍 Coordinate Visualization")
                 fig = create_coordinate_plot(rect_coord.northing, rect_coord.easting, distance, angle, "polar")
-                st.plotly_chart(fig, use_container_width=True)
+                st.pyplot(fig, use_container_width=True)
                 
                 # Additional information
                 with st.expander("📋 Detailed Information"):
@@ -312,7 +297,7 @@ with tab1:
                 st.divider()
                 st.markdown("### 📍 Coordinate Visualization")
                 fig = create_coordinate_plot(northing, easting, polar_coord.distance, polar_coord.angle, "rect")
-                st.plotly_chart(fig, use_container_width=True)
+                st.pyplot(fig, use_container_width=True)
                 
                 # Additional information
                 with st.expander("📋 Detailed Information"):
